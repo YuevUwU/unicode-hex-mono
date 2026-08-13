@@ -28,68 +28,153 @@ def is_valid_codepoint(cp):
     return True
 
 
-def draw_rounded_square(pen, x, y, size, radius):
+def draw_rounded_square(pen, x, y, size, radius, stroke_width=40):
     """
-    Draw a filled rounded square using Bézier curves.
+    Draw a rounded square frame (hollow rounded square).
+    
+    The frame is constructed from:
+      1. An outer rounded square drawn clockwise.
+      2. An inner rounded square drawn counter-clockwise.
+      
+    This creates a real hole in the middle using the non-zero winding rule.
     
     Args:
         pen: FontForge glyph pen
-        x, y: bottom-left corner coordinates
-        size: width and height of the square
-        radius: corner radius for rounding
+        x, y: Bottom-left corner of the outer square.
+        size: Outer square width and height.
+        radius: Outer corner radius.
+        stroke_width: Thickness of the frame.
     
-    The path is drawn clockwise starting from the bottom-left corner.
-    Uses Bézier constant 0.448 for 90° circular arc approximation.
+    The outer contour is clockwise and the inner contour is counter-clockwise.
     """
-    # Clamp radius to not exceed half the size
-    r = min(radius, size / 2)
     
-    # Calculate corner positions
+    # ------------------------------------------------------------------
+    # Clamp dimensions
+    # ------------------------------------------------------------------
+    
+    r_outer = min(radius, size / 2)
+    
+    # Inner square
+    inner_x = x + stroke_width
+    inner_y = y + stroke_width
+    inner_size = size - 2 * stroke_width
+    
+    if inner_size <= 0:
+        raise ValueError("stroke_width is too large for the square size")
+    
+    # Inner radius should follow the outer radius while accounting
+    # for the frame thickness.
+    r_inner = max(0, r_outer - stroke_width)
+    r_inner = min(r_inner, inner_size / 2)
+    
+    K = 0.448
+    
+    
+    # ==================================================================
+    # OUTER CONTOUR
+    # Clockwise
+    # ==================================================================
+    
+    pen.moveTo((x + r_outer, y))
+
+    # Bottom edge
+    pen.lineTo((x + size - r_outer, y))
+    
+    # Bottom-right corner
+    pen.curveTo(
+        (x + size - r_outer * K, y),
+        (x + size, y + r_outer * K),
+        (x + size, y + r_outer)
+    )
+    
+    # Right edge
+    pen.lineTo((x + size, y + size - r_outer))
+    
+    # Top-right corner
+    pen.curveTo(
+        (x + size, y + size - r_outer * K),
+        (x + size - r_outer * K, y + size),
+        (x + size - r_outer, y + size)
+    )
+    
+    # Top edge
+    pen.lineTo((x + r_outer, y + size))
+    
+    # Top-left corner
+    pen.curveTo(
+        (x + r_outer * K, y + size),
+        (x, y + size - r_outer * K),
+        (x, y + size - r_outer)
+    )
+    
+    # Left edge
+    pen.lineTo((x, y + r_outer))
+    
     # Bottom-left corner
-    pen.moveTo((x + r, y))
-    
-    # Bottom edge to bottom-right corner
-    pen.lineTo((x + size - r, y))
-    
-    # Bottom-right rounded corner (arc)
-    # Arc from bottom to right side
     pen.curveTo(
-        (x + size - r * 0.448, y),
-        (x + size, y + r * 0.448),
-        (x + size, y + r)
+        (x, y + r_outer * K),
+        (x + r_outer * K, y),
+        (x + r_outer, y)
     )
     
-    # Right edge to top-right corner
-    pen.lineTo((x + size, y + size - r))
+    pen.closePath()
     
-    # Top-right rounded corner (arc)
-    # Arc from right to top side
+    
+    # ==================================================================
+    # INNER CONTOUR
+    # Counter-clockwise
+    #
+    # This contour becomes a hole.
+    # ==================================================================
+    
+    pen.moveTo((inner_x + r_inner, inner_y))
+    
+    # Bottom-left corner
     pen.curveTo(
-        (x + size, y + size - r * 0.448),
-        (x + size - r * 0.448, y + size),
-        (x + size - r, y + size)
+        (inner_x + r_inner * K, inner_y),
+        (inner_x, inner_y + r_inner * K),
+        (inner_x, inner_y + r_inner)
     )
     
-    # Top edge to top-left corner
-    pen.lineTo((x + r, y + size))
-    
-    # Top-left rounded corner (arc)
-    # Arc from top to left side
-    pen.curveTo(
-        (x + r * 0.448, y + size),
-        (x, y + size - r * 0.448),
-        (x, y + size - r)
+    # Left edge
+    pen.lineTo(
+        (inner_x, inner_y + inner_size - r_inner)
     )
     
-    # Left edge to bottom-left corner
-    pen.lineTo((x, y + r))
-    
-    # Bottom-left rounded corner (arc)
-    # Arc from left to bottom side
+    # Top-left corner
     pen.curveTo(
-        (x, y + r * 0.448),
-        (x + r * 0.448, y),
-        (x + r, y)
+        (inner_x, inner_y + inner_size - r_inner * K),
+        (inner_x + r_inner * K, inner_y + inner_size),
+        (inner_x + r_inner, inner_y + inner_size)
+    )
+    
+    # Top edge
+    pen.lineTo(
+        (inner_x + inner_size - r_inner, inner_y + inner_size)
+    )
+    
+    # Top-right corner
+    pen.curveTo(
+        (inner_x + inner_size - r_inner * K, inner_y + inner_size),
+        (inner_x + inner_size, inner_y + inner_size - r_inner * K),
+        (inner_x + inner_size, inner_y + inner_size - r_inner)
+    )
+    
+    # Right edge
+    pen.lineTo(
+        (inner_x + inner_size, inner_y + r_inner)
+    )
+    
+    # Bottom-right corner
+    pen.curveTo(
+        (inner_x + inner_size, inner_y + r_inner * K),
+        (inner_x + inner_size - r_inner * K, inner_y),
+        (inner_x + inner_size - r_inner, inner_y)
+    )
+    
+    # Bottom edge
+    pen.lineTo(
+        (inner_x + r_inner, inner_y)
     )
     
     pen.closePath()
