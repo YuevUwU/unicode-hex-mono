@@ -1,0 +1,15 @@
+[project]
+name = "unicode-hex-mono"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fonttools[woff]>=4.63.0",
+]
+
+[tool.basedpyright]
+reportMissingModuleSource = false
+
+[dependency-groups]
+dev = [
+    "fontforge-stubs>=2026.1.2",
+]

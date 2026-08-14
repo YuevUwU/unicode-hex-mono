@@ -10,6 +10,20 @@
 
 Perfect as a **debugging and fallback font** to visualize invisible characters, detect missing glyphs, and identify mystery Unicode symbols by their hexadecimal codepoints.
 
+## Visual Examples (Bordered Version, This Branch)
+
+**About the changes:** See the long description of commits
+
+You can install `dist/*_renamed.otf` to your PC.
+And then, use it like this:
+```css
+font-family: "Noto Serif","Noto Serif TC", "UnicodeHexMono-00000-000FF", "UnicodeHexMono-00100-0F35F", "UnicodeHexMono-0F360-1DDE1", "UnicodeHexMono-108400-10FFFD", "UnicodeHexMono-1DDE2-2C843", "UnicodeHexMono-2C844-3B2A5", "UnicodeHexMono-3B2A6-49D07", "UnicodeHexMono-49D08-58769", "UnicodeHexMono-5876A-671CB", "UnicodeHexMono-671CC-75C2D", "UnicodeHexMono-75C2E-8468F", "UnicodeHexMono-84690-930F1", "UnicodeHexMono-930F2-A1B53", "UnicodeHexMono-A1B54-B05B5", "UnicodeHexMono-B05B6-BF015", "UnicodeHexMono-BF016-CDA77", "UnicodeHexMono-CDA78-DC4D9", "UnicodeHexMono-DC4DA-EAF3B", "UnicodeHexMono-EAF3C-F999D", "UnicodeHexMono-F999E-1083FF";
+```
+
+![Bordered Glyph Examples](.github-assets/bordered-showcase.png)
+
+Thank you to the original authors for including so many useful utilities.
+
 ## 📸 Visual Examples
 
 ### Glyph Display Formats

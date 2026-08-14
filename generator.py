@@ -182,7 +182,7 @@ def generate_multi_file():
         
         print(f"\n{'=' * 70}")
         print(f"File {file_idx + 2}/{total_files}: U+{min_cp:05X} - U+{max_cp:05X}")
-        print(f"Glyphs in this file: {len(chunk):,}")
+        print(f"Glyphs in this file: {len(chunk)+len(ascii_codepoints):,}")
         print(f"{'=' * 70}")
         
         # Create font
@@ -190,10 +190,10 @@ def generate_multi_file():
         
         # Generate glyphs for this chunk
         print("Generating glyphs...")
-        for i, cp in enumerate(chunk):
+        for i, cp in enumerate(chunk+ascii_codepoints):
             glyphs.create_glyph(font, cp)
             if (i + 1) % 1000 == 0:
-                print(f"  {i + 1:,} / {len(chunk):,} glyphs generated...")
+                print(f"  {i + 1:,} / {len(chunk)+len(ascii_codepoints):,} glyphs generated...")
         
         # Add .notdef glyph
         print("Creating .notdef glyph...")
