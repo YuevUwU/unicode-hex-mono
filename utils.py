@@ -28,7 +28,7 @@ def is_valid_codepoint(cp):
     return True
 
 
-def draw_rounded_square(pen, x, y, size, radius, stroke_width=40):
+def draw_rounded_square(pen, x, y, size, radius, stroke_width=config.DEFAULT_SQUARE_STROKE_WIDTH):
     """
     Draw a rounded square frame (hollow rounded square).
     

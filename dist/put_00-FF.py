@@ -1,3 +1,9 @@
+"""
+(DEPRECATED: The functionality of this script is already included in generator.py)
+Put U+0000–U+00FF into the generated fonts.
+(Windows appears to regard only those glyphs located within the BMP block as valid.)
+"""
+
 import fontforge
 
 src = fontforge.open("UnicodeHexMono_00000_000FF.otf")

@@ -1,3 +1,8 @@
+"""
+Set different names to install in your OS
+Output Files: *_renamed.otf
+"""
+
 from fontTools.ttLib import TTFont
 from pathlib import Path
 import re

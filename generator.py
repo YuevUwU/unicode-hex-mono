@@ -4,7 +4,7 @@ Font generation engine for UnicodeHexMono.
 This module orchestrates the multi-file font generation process:
 - Collects valid Unicode codepoints
 - Separates ASCII (U+0000-U+00FF) into dedicated file for performance
-- Splits remaining codepoints into chunks (60,000 glyphs per file)
+- Splits whole unicode codepoints into chunks (32768 glyphs per file)
 - Creates FontForge font objects with proper metadata
 - Generates individual glyphs for each codepoint
 - Validates and exports OTF font files
@@ -13,6 +13,7 @@ The multi-file approach is necessary because OpenType fonts have a hard limit
 of 65,535 glyphs per file, while Unicode has over 1 million codepoints.
 """
 
+from math import ceil
 import os
 import fontforge
 import config
@@ -66,12 +67,12 @@ def create_font_object():
 # Multi-File Font Generation
 # ============================================================================
 
-def generate_multi_file():
+def generate_multi_file(dry_run=False, generate_woff=False):
     """Generate multiple font files to cover the full Unicode range.
     
     Strategy:
     - File 1: ASCII & Extended ASCII (U+0000-U+00FF) - 256 glyphs
-    - Files 2+: Remaining codepoints in 60,000-glyph chunks
+    - Files 2+: Whole codepoints in 32,768-glyph chunks
     """
     print("\nMode: Multi-file generation")
     print(f"Glyphs per file (non-ASCII): {config.GLYPHS_PER_FILE}")
@@ -82,29 +83,33 @@ def generate_multi_file():
     
     # Collect all valid codepoints
     print("\nCollecting valid codepoints...")
-    all_codepoints = []
+    all_codepoints: list[int | None] = []
+    total_valid_codepoints = 0
     for cp in range(config.UNICODE_MIN, config.UNICODE_MAX + 1):
         if utils.is_valid_codepoint(cp):
             all_codepoints.append(cp)
-    
-    total_codepoints = len(all_codepoints)
-    print(f"Total valid codepoints: {total_codepoints:,}")
+            total_valid_codepoints += 1
+        else:
+            all_codepoints.append(None)
+
+    print(f"Total valid codepoints: {total_valid_codepoints:,}")
     
     # Separate ASCII range (U+0000-U+00FF) from the rest
     ascii_range_end = 0x00FF
-    ascii_codepoints = [cp for cp in all_codepoints if cp <= ascii_range_end]
-    remaining_codepoints = [cp for cp in all_codepoints if cp > ascii_range_end]
+    ascii_codepoints = [cp for cp in all_codepoints if cp is not None and cp <= ascii_range_end]
     
     print(f"\nASCII & Extended ASCII (U+0000-U+00FF): {len(ascii_codepoints):,} glyphs")
-    print(f"Remaining codepoints (U+0100+): {len(remaining_codepoints):,} glyphs")
+    print(f"Whole codepoints (U+0100+): {len(all_codepoints):,} glyphs")
     
     # Calculate total number of files
-    num_remaining_files = (len(remaining_codepoints) + config.GLYPHS_PER_FILE - 1) // config.GLYPHS_PER_FILE
-    total_files = 1 + num_remaining_files  # 1 ASCII file + remaining chunks
+    num_whole_files = ceil(
+        len(all_codepoints) / config.GLYPHS_PER_FILE
+    )
+    total_files = 1 + num_whole_files  # 1 ASCII file + whole unicode files
     
     print(f"\nWill generate {total_files} font files:")
     print(f"  - 1 ASCII file (U+0000-U+00FF)")
-    print(f"  - {num_remaining_files} files for remaining Unicode")
+    print(f"  - {num_whole_files} files for whole Unicode")
     
     font_files = []
     
@@ -142,47 +147,52 @@ def generate_multi_file():
     print(f"\nGenerating {output_path_otf}...")
     
     # Generate OTF
-    font.generate(output_path_otf, flags=('opentype', 'omit-instructions', 'dummy-dsig'))
+    if not dry_run:
+        font.generate(output_path_otf, flags=('opentype', 'omit-instructions', 'dummy-dsig'))
     font_files.append(output_path_otf)
     
     print(f"✓ Generated: {output_path_otf}")
     print(f"  Total glyphs in file: {len(font)}")
-    
-    # Generate WOFF2
-    output_path_woff2 = f"dist/UnicodeHexMono_{min_cp:05X}_{max_cp:05X}.woff2"
-    print(f"\nGenerating {output_path_woff2}...")
-    print("  Converting OTF to WOFF2 using fonttools...")
-    try:
-        from fontTools.ttLib import TTFont
-        otf_font = TTFont(output_path_otf)
-        otf_font.flavor = 'woff2'
-        otf_font.save(output_path_woff2)
-        font_files.append(output_path_woff2)
-        print(f"✓ Generated: {output_path_woff2}")
-        print(f"  Format: WOFF2 (optimized for web)")
-    except ImportError:
-        print("⚠ fonttools not installed - skipping WOFF2 generation")
-        print("  Install with: pip3 install --break-system-packages fonttools brotli")
+
+    if generate_woff:
+        # Generate WOFF2
+        output_path_woff2 = f"dist/UnicodeHexMono_{min_cp:05X}_{max_cp:05X}.woff2"
+        print(f"\nGenerating {output_path_woff2}...")
+        print("  Converting OTF to WOFF2 using fonttools...")
+        try:
+            if not dry_run:
+                from fontTools.ttLib import TTFont
+                otf_font = TTFont(output_path_otf)
+                otf_font.flavor = 'woff2'
+                otf_font.save(output_path_woff2)
+            font_files.append(output_path_woff2)
+            print(f"✓ Generated: {output_path_woff2}")
+            print(f"  Format: WOFF2 (optimized for web)")
+        except ImportError:
+            print("⚠ fonttools not installed - skipping WOFF2 generation")
+            print("  Install with: pip3 install --break-system-packages fonttools brotli")
     
     font.close()
     
     # ========================================================================
-    # STEP 2: Generate remaining files in 60k chunks
+    # STEP 2: Generate whole unicode files in 32768 chunks
     # ========================================================================
-    for file_idx in range(num_remaining_files):
+    for file_idx in range(num_whole_files):
         start_idx = file_idx * config.GLYPHS_PER_FILE
-        end_idx = min(start_idx + config.GLYPHS_PER_FILE, len(remaining_codepoints))
-        chunk = remaining_codepoints[start_idx:end_idx]
+        end_idx = min(start_idx + config.GLYPHS_PER_FILE, len(all_codepoints))
+        chunk = [cp for cp in all_codepoints[start_idx:end_idx] if cp is not None]
         
         if not chunk:
             continue
         
         min_cp = chunk[0]
         max_cp = chunk[-1]
+
+        total_glyphs = set(chunk+ascii_codepoints)
         
         print(f"\n{'=' * 70}")
         print(f"File {file_idx + 2}/{total_files}: U+{min_cp:05X} - U+{max_cp:05X}")
-        print(f"Glyphs in this file: {len(chunk)+len(ascii_codepoints):,}")
+        print(f"Glyphs in this file: {len(total_glyphs):,}")
         print(f"{'=' * 70}")
         
         # Create font
@@ -190,10 +200,10 @@ def generate_multi_file():
         
         # Generate glyphs for this chunk
         print("Generating glyphs...")
-        for i, cp in enumerate(chunk+ascii_codepoints):
+        for i, cp in enumerate(total_glyphs):
             glyphs.create_glyph(font, cp)
-            if (i + 1) % 1000 == 0:
-                print(f"  {i + 1:,} / {len(chunk)+len(ascii_codepoints):,} glyphs generated...")
+            # if (i + 1) % 1000 == 0:
+            #     print(f"  {i + 1:,} / {len(chunk)+len(ascii_codepoints):,} glyphs generated...")
         
         # Add .notdef glyph
         print("Creating .notdef glyph...")
@@ -208,36 +218,39 @@ def generate_multi_file():
         print(f"\nGenerating {output_path_otf}...")
         
         # Generate OTF with proper flags
-        font.generate(output_path_otf, flags=('opentype', 'omit-instructions', 'dummy-dsig'))
+        if not dry_run:
+            font.generate(output_path_otf, flags=('opentype', 'omit-instructions', 'dummy-dsig'))
         font_files.append(output_path_otf)
         
         print(f"✓ Generated: {output_path_otf}")
         print(f"  Total glyphs in file: {len(font)}")
         
         # Generate WOFF2 using fonttools
-        output_path_woff2 = f"dist/UnicodeHexMono_{min_cp:05X}_{max_cp:05X}.woff2"
-        print(f"\nGenerating {output_path_woff2}...")
-        print("  Converting OTF to WOFF2 using fonttools...")
-        try:
-            from fontTools.ttLib import TTFont
-            otf_font = TTFont(output_path_otf)
-            otf_font.flavor = 'woff2'
-            otf_font.save(output_path_woff2)
-            font_files.append(output_path_woff2)
-            print(f"✓ Generated: {output_path_woff2}")
-            print(f"  Format: WOFF2 (optimized for web)")
-        except ImportError:
-            print("⚠ fonttools not installed - skipping WOFF2 generation")
-            print("  Install with: pip3 install --break-system-packages fonttools brotli")
+        if generate_woff:
+            output_path_woff2 = f"dist/UnicodeHexMono_{min_cp:05X}_{max_cp:05X}.woff2"
+            print(f"\nGenerating {output_path_woff2}...")
+            print("  Converting OTF to WOFF2 using fonttools...")
+            try:
+                if not dry_run:
+                    from fontTools.ttLib import TTFont
+                    otf_font = TTFont(output_path_otf)
+                    otf_font.flavor = 'woff2'
+                    otf_font.save(output_path_woff2)
+                font_files.append(output_path_woff2)
+                print(f"✓ Generated: {output_path_woff2}")
+                print(f"  Format: WOFF2 (optimized for web)")
+            except ImportError:
+                print("⚠ fonttools not installed - skipping WOFF2 generation")
+                print("  Install with: pip3 install --break-system-packages fonttools brotli")
         
         font.close()
     
     # Summary
     print("\n" + "=" * 70)
     print("SUCCESS!")
-    print(f"Generated {len(font_files)} font files ({total_files} ranges × 2 formats):")
+    print(f"Generated {len(font_files)} font files:")
     for f in font_files:
         print(f"  - {f}")
-    print(f"Total codepoints covered: {total_codepoints:,}")
-    print(f"Formats: OTF (OpenType) + WOFF2 (Web optimized)")
+    print(f"Total codepoints covered: {total_valid_codepoints:,}")
+    print(f"Formats: OTF (OpenType){" + WOFF2 (Web optimized)" if generate_woff else ""}")
     print("=" * 70)
