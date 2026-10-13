@@ -227,7 +227,7 @@ def generate_with_range(
     font_files.append(output_path_otf)
     
     print(f"✓ Generated: {output_path_otf}")
-    print(f"  Total glyphs in file: {len(font)}")
+    print(f"  Total glyphs in file: {sum(1 for _ in font.glyphs())}")
     
     # Generate WOFF2 using fonttools
     if generate_woff:

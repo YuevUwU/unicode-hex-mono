@@ -49,3 +49,6 @@ node_modules/
 
 # Release assets
 dist/**/*.7z
+
+# Not ready to push
+generate*.bat
