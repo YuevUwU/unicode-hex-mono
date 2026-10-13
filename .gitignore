@@ -46,3 +46,6 @@ node_modules/
 
 # Keep .github-assets for README images
 !.github-assets/
+
+# Release assets
+dist/**/*.7z
