@@ -85,7 +85,7 @@ def main() -> None:
     generate_multi_file(
         wanted_range=wanted_range,
         dry_run=args.dry_run,
-        generate_ascii=False,
+        generate_ascii=args.all,
         generate_woff=args.woff,
     )
 

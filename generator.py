@@ -108,8 +108,8 @@ def generate_multi_file(
 
     print(f"Total valid codepoints: {total_valid_codepoints:,}")
     ascii_codepoints = list(get_ascii_codepoints())
-    print(f"\nASCII & Extended ASCII (U+0000-U+00FF): {len(ascii_codepoints):,} glyphs")
-    print(f"Whole codepoints (U+0100+): {len(all_codepoints):,} glyphs")
+    print(f"\nASCII & Extended ASCII (U+0000-U+00FF, for compatibility): {len(ascii_codepoints):,} glyphs")
+    print(f"Whole codepoints: {len(all_codepoints):,} glyphs")
     
     # Calculate total number of files
     num_whole_files = ceil(
