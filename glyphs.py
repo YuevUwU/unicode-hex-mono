@@ -53,6 +53,8 @@ def draw_replacement_character(glyph):
     
     pen = None
 
+    glyph.removeOverlap()
+
 
 def draw_hex_code_2digit(glyph, codepoint):
     """
