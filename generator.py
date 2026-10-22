@@ -47,6 +47,11 @@ def create_font_object():
     font.em = config.EM_SIZE
     font.ascent = config.ASCENT
     font.descent = config.DESCENT
+
+    # Set hhea metrics
+    font.hhea_ascent = 800
+    font.hhea_descent = -200
+    font.hhea_linegap = 0
     
     # Set OS/2 table properties (required for proper font rendering)
     font.os2_vendor = "PFNT"  # 4-character vendor ID
@@ -59,10 +64,12 @@ def create_font_object():
     font.os2_panose = (2, 11, 6, 9, 3, 0, 0, 2, 0, 4)  # Monospaced
 
     # Explicitly use absolute values, not offsets.
-    font.os2_winascent_add = False
-    font.os2_windescent_add = False
     font.os2_typoascent_add = False
     font.os2_typodescent_add = False
+    font.os2_winascent_add = False
+    font.os2_windescent_add = False
+    font.hhea_ascent_add = False
+    font.hhea_descent_add = False
     
     # Set PostScript name (required for macOS)
     font.appendSFNTName('English (US)', 'PostScriptName', config.FONT_NAME)
