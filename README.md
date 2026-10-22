@@ -1,18 +1,18 @@
 # UnicodeHexMono (Bordered Version, This branch)
 
-## Visual Examples
-
-**About the changes:** See the long description of commits
+**About the changes:** See the long description of commits. I DON'T update logs in `CHANGELOG.md`/`HISTORY.md`.
 
 Download and Usage: [[here]](https://github.com/YuevUwU/unicode-hex-mono/releases/latest)
 
+## Visual Examples
+
 ### Bordered
 
-![Bordered Glyph Showcase](.github-assets/bordered-showcase-v2.png)
+![Bordered Glyph Showcase](.github-assets/bordered-showcase-v2.1.webp)
 
 ### Original (v1.1.0)
 
-![Bordered Glyph Showcase](.github-assets\original-1.1.0-showcase.webp)
+![Bordered Glyph Showcase](.github-assets/original-1.1.0-showcase.webp)
 
 Thank you to the original authors for including so many useful utilities.
 
