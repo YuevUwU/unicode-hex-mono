@@ -32,13 +32,13 @@ Perfect as a **debugging and fallback font** to visualize invisible characters, 
 
 ### Glyph Display Formats
 
-![Glyph Examples](.github-assets/glyph-examples.png)
+![Glyph Examples](.github-assets/glyph-examples.webp)
 
 *UnicodeHexMono renders different Unicode ranges with distinct visual styles for easy identification.*
 
 ### Debugging in Action
 
-![Debugging Example](.github-assets/debugging-example.png)
+![Debugging Example](.github-assets/debugging-example.webp)
 
 *Invisible characters become visible, making debugging text issues effortless.*
 
