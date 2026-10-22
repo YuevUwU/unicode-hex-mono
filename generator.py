@@ -24,18 +24,25 @@ import config
 import utils
 import glyphs
 
+GeneratedFileNames = list[str]
+
 # ============================================================================
 # Font Object Creation
 # ============================================================================
 
-def create_font_object():
+def create_font_object(is_test: bool = False):
     """Create and configure a new FontForge font object with proper metadata."""
     font = fontforge.font()
-    
+
     # Set font metadata
-    font.fontname = config.FONT_NAME
-    font.familyname = config.FONT_FAMILY
-    font.fullname = config.FONT_FULLNAME
+    if is_test:
+        fontname = "UnicodeHexMono_Test"
+        familyname = "UnicodeHexMono Test"
+        fullname = "UnicodeHexMono Test"
+    else:
+        fontname = config.FONT_NAME
+        familyname = config.FONT_FAMILY
+        fullname = config.FONT_FULLNAME
     font.version = config.FONT_VERSION
     font.copyright = config.FONT_COPYRIGHT
     font.weight = config.FONT_STYLE
@@ -72,11 +79,11 @@ def create_font_object():
     font.hhea_descent_add = False
     
     # Set PostScript name (required for macOS)
-    font.appendSFNTName('English (US)', 'PostScriptName', config.FONT_NAME)
-    font.appendSFNTName('English (US)', 'Family', config.FONT_FAMILY)
-    font.appendSFNTName('English (US)', 'Fullname', config.FONT_FULLNAME)
-    font.appendSFNTName('English (US)', 'Preferred Family', config.FONT_FAMILY)
-    font.appendSFNTName('English (US)', 'Compatible Full', config.FONT_FULLNAME)
+    font.appendSFNTName('English (US)', 'PostScriptName', fontname)
+    font.appendSFNTName('English (US)', 'Family', familyname)
+    font.appendSFNTName('English (US)', 'Fullname', fullname)
+    font.appendSFNTName('English (US)', 'Preferred Family', familyname)
+    font.appendSFNTName('English (US)', 'Compatible Full', fullname)
     
     return font
 
@@ -194,18 +201,28 @@ def generate_with_range(
     path_stem: str | Path | None = None,
     cp_min_max: tuple[int, int] | None = None,
     dry_run: bool = False,
-    generate_woff: bool = False
-) -> list[str]:
-    match (path_stem, cp_min_max):
-        case (None, None):  # Leave it undefined for now
-            raise ValueError("One of path_stem and cp_min_max should be provided")
-        case (path_stem, None):
-            output_stem = Path(path_stem)
-        case (None, cp_min_max):
-            min_cp, max_cp = cp_min_max
-            output_stem = Path(f"dist/UnicodeHexMono_{min_cp:05X}_{max_cp:05X}")
-        case _:
-            raise ValueError("Do not provide both path_stem and cp_min_max")
+    generate_woff: bool = False,
+    is_test: bool = False,
+) -> GeneratedFileNames:
+    TEST_FONT_OUTPUT_STEM = Path("dist/UnicodeHexMono_TEST")
+    if is_test:
+        if path_stem is not None and cp_min_max is not None:
+            raise ValueError("is_test=True is not allowed to specify path_stem and cp_min_max. It has its reserved name.")
+        output_stem = TEST_FONT_OUTPUT_STEM
+    else:
+        match (path_stem, cp_min_max):
+            case (None, None):  # Leave it undefined for now
+                raise ValueError("One of path_stem and cp_min_max should be provided")
+            case (path_stem, None):
+                output_stem = Path(path_stem)
+            case (None, cp_min_max):
+                min_cp, max_cp = cp_min_max
+                output_stem = Path(f"dist/UnicodeHexMono_{min_cp:05X}_{max_cp:05X}")
+            case _:
+                raise ValueError("Do not provide both path_stem and cp_min_max")
+
+        if output_stem == TEST_FONT_OUTPUT_STEM:
+            raise ValueError(f"Parsed output stem is the reserved name {TEST_FONT_OUTPUT_STEM}")
     
     # Ensure dist directory exists
     output_stem.parent.mkdir(parents=True, exist_ok=True)
@@ -213,7 +230,7 @@ def generate_with_range(
     font_files = []
     
     # Create font
-    font = create_font_object()
+    font = create_font_object(is_test=is_test)
     
     # Generate glyphs for this chunk
     print("Generating glyphs...")
@@ -271,7 +288,7 @@ def get_ascii_codepoints():
     return tuple(filter(lambda cp: utils.is_valid_codepoint(cp), range(ascii_range_end+1)))
 
 
-def generate_ascii_subset(dry_run: bool = False, generate_woff: bool = False) -> list[str]:
+def generate_ascii_subset(dry_run: bool = False, generate_woff: bool = False) -> GeneratedFileNames:
     # Separate ASCII range (U+0000-U+00FF) from the rest
     ascii_codepoints = get_ascii_codepoints()
     

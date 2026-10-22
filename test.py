@@ -4,10 +4,7 @@ Quick test script to generate a comprehensive sample font for verifying hex digi
 This script tests all hex digits (0-9, A-F) in various combinations across BMP, supplementary planes, and Plane 16.
 """
 
-import fontforge
-
-import config
-import glyphs
+from generator import generate_with_range
 
 # Test codepoints to systematically verify all hex digits (0-9, A-F) in different positions
 test_codepoints = [
@@ -95,49 +92,8 @@ test_codepoints = [
 ]
 
 print("Creating test font...")
-font = fontforge.font()
-font.fontname = "UnicodeHexMono_Test"
-font.familyname = "UnicodeHexMono Test"
-font.fullname = "UnicodeHexMono Test"
-font.encoding = "UnicodeFull"
-font.em = config.EM_SIZE
-font.ascent = config.ASCENT
-font.descent = config.DESCENT
-
-print(f"\nGenerating {len(test_codepoints)} test glyphs...")
-for cp in test_codepoints:
-    print(f"  Creating glyph U+{cp:05X}")
-    glyphs.create_glyph(font, cp)
-
-# Add .notdef
-print("\nCreating .notdef glyph...")
-glyphs.create_notdef_glyph(font)
-
-# Generate OTF
-output_path_otf = "dist/UnicodeHexMono_TEST.otf"
-print(f"\nGenerating {output_path_otf}...")
-font.generate(output_path_otf, flags=('opentype', 'omit-instructions', 'dummy-dsig'))
-print(f"✓ Generated: {output_path_otf}")
-
-# Generate WOFF2 using fonttools (FontForge's WOFF2 is broken)
-output_path_woff2 = "dist/UnicodeHexMono_TEST.woff2"
-print(f"\nGenerating {output_path_woff2}...")
-print("  Converting OTF to WOFF2 using fonttools...")
-try:
-    from fontTools.ttLib import TTFont
-    otf_font = TTFont(output_path_otf)
-    otf_font.flavor = 'woff2'
-    otf_font.save(output_path_woff2)
-    print(f"✓ Generated: {output_path_woff2}")
-except ImportError:
-    print("⚠ fonttools not installed - skipping WOFF2 generation")
-    print("  Install with: pip3 install --break-system-packages fonttools brotli")
-
-print(f"\n✅ Test fonts generated successfully!")
-print(f"   Formats: OTF + WOFF2")
-print(f"\nTest codepoints included ({len(test_codepoints)} total):")
-for cp in test_codepoints:
-    hex_str = f"{cp:06X}"
-    print(f"  U+{hex_str}")
-
-font.close()
+font_files = generate_with_range(test_codepoints, is_test=True)
+print("SUCCESS!")
+print(f"Generated {len(font_files)} font files:")
+for f in font_files:
+    print(f"  - {f}")
