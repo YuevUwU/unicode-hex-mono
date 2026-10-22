@@ -51,10 +51,7 @@ DIGIT_STROKE_WIDTH = with_ratio(25)   # Stroke width for digit paths
 TWO_DIGIT_SIZE = with_ratio(400)      # Huge size for 2-digit display (54% larger than standard DIGIT_SIZE)
 
 # Glyph positioning
-GLYPH_Y_OFFSET = -50      # Vertical offset for centering glyphs
-# This should be:
-# GLYPH_Y_OFFSET = (ASCENT - DESCENT - BOX_SIZE) / 2  # EM Box Center - BOX_SIZE / 2
-# However, the glyph vertical position is currently still too low; we need to investigate how to configure it.
+GLYPH_Y_OFFSET = (ASCENT - DESCENT - BOX_SIZE) / 2      # Bottom Y of the box
 
 # U+FFFD replacement character display
 REPLACEMENT_CHAR_PADDING = 100  # Padding around the X symbol
